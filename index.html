@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biweekly Paycheck Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .day {
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .breakdown {
+      margin-top: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .note {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .pay-type {
+      margin-top: 15px;
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #f5f5f5;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Biweekly Paycheck Calculator</h2>
+
+    <!-- Pay type selection -->
+    <div class="pay-type">
+      <label for="payType">Pay Type:</label>
+      <select id="payType" onchange="togglePayFields()">
+        <option value="hourly">Hourly</option>
+        <option value="salary">Salary</option>
+      </select>
+      
+      <!-- Hourly wage field -->
+      <div id="hourlyField">
+        <label for="wage">Hourly Wage ($):</label>
+        <input type="number" id="wage" step="0.01" min="0" />
+      </div>
+      
+      <!-- Salary field -->
+      <div id="salaryField" style="display:none;">
+        <label for="salary">Annual Salary ($):</label>
+        <input type="number" id="salary" step="100" min="0" />
+      </div>
+      
+      <!-- Tax checkbox -->
+      <div class="checkbox-label" style="margin-top: 15px;">
+        <input type="checkbox" id="applyTaxes" />
+        <label for="applyTaxes">Apply estimated tax withholdings</label>
+      </div>
+    </div>
+
+    <div id="week">
+      <div class="day"><label>Monday Hours: <input type="number" id="mon" min="0" /></label></div>
+      <div class="day"><label>Tuesday Hours: <input type="number" id="tue" min="0" /></label></div>
+      <div class="day"><label>Wednesday Hours: <input type="number" id="wed" min="0" /></label></div>
+      <div class="day"><label>Thursday Hours: <input type="number" id="thu" min="0" /></label></div>
+      <div class="day"><label>Friday Hours: <input type="number" id="fri" min="0" /></label></div>
+      <div class="day"><label>Saturday Hours: <input type="number" id="sat" min="0" /></label></div>
+      <div class="day">
+        <label>Sunday Hours: <input type="number" id="sun" min="0" /></label>
+        <div class="checkbox-label">
+          <input type="checkbox" id="sundayTimeAndHalf" checked />
+          <label for="sundayTimeAndHalf">Calculate Sunday at time and a half</label>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="calculatePay()">Calculate Biweekly Paycheck</button>
+    <div class="result" id="result"></div>
+    <div class="result" id="totalHours"></div>
+    <div class="breakdown" id="breakdown"></div>
+  </div>
+
+  <script>
+    function togglePayFields() {
+      const payType = document.getElementById('payType').value;
+      
+      if (payType === 'hourly') {
+        document.getElementById('hourlyField').style.display = 'block';
+        document.getElementById('salaryField').style.display = 'none';
+        document.getElementById('week').style.display = 'block';
+      } else {
+        document.getElementById('hourlyField').style.display = 'none';
+        document.getElementById('salaryField').style.display = 'block';
+        document.getElementById('week').style.display = 'none';
+      }
+    }
+
+    function calculatePay() {
+      const payType = document.getElementById('payType').value;
+      
+      if (payType === 'salary') {
+        calculateSalaryPay();
+      } else {
+        calculateHourlyPay();
+      }
+    }
+    
+    function calculateSalaryPay() {
+      const annualSalary = Math.max(parseFloat(document.getElementById('salary').value) || 0, 0);
+      const biweeklyGrossPay = annualSalary / 26;
+      
+      // Apply taxes if checkbox is checked
+      const applyTaxes = document.getElementById('applyTaxes').checked;
+      const taxRate = 0.20; // 20% tax rate
+      const taxAmount = applyTaxes ? biweeklyGrossPay * taxRate : 0;
+      const biweeklyNetPay = biweeklyGrossPay - taxAmount;
+      
+      document.getElementById('result').textContent = `Biweekly Paycheck: ${biweeklyNetPay.toFixed(2)}`;
+      document.getElementById('totalHours').textContent = '';
+      document.getElementById('breakdown').innerHTML = `
+        Annual Salary: ${annualSalary.toFixed(2)}<br>
+        Biweekly Gross Pay: ${biweeklyGrossPay.toFixed(2)}<br>
+        ${applyTaxes ? `Tax Deduction (20%): -${taxAmount.toFixed(2)}<br>` : ''}
+        Biweekly Net Pay: ${biweeklyNetPay.toFixed(2)}
+      `;
+    }
+
+    function calculateHourlyPay() {
+      const wage = Math.max(parseFloat(document.getElementById('wage').value) || 0, 0);
+      const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      let weeklyHours = 0;
+
+      for (let i = 0; i < days.length; i++) {
+        let hours = Math.max(parseFloat(document.getElementById(days[i]).value) || 0, 0);
+        weeklyHours += hours;
+      }
+
+      const cappedRegularHours = Math.min(weeklyHours, 40);
+      let overtimeHours = Math.max(weeklyHours - 40, 0);
+      let overtimePay = overtimeHours * wage * 1.5;
+
+      // Sunday hours
+      let sundayHours = Math.max(parseFloat(document.getElementById('sun').value) || 0, 0);
+      let sundayPay = 0;
+      
+      // Check if Sunday should be calculated at time and a half
+      if (document.getElementById('sundayTimeAndHalf').checked) {
+        sundayPay = sundayHours * wage * 1.5;
+      } else {
+        sundayPay = sundayHours * wage;
+      }
+
+      const totalHours = weeklyHours + sundayHours;
+      const regularPay = (cappedRegularHours * wage);
+      const weeklyPay = regularPay + overtimePay + sundayPay;
+      const biweeklyGrossPay = weeklyPay * 2;
+      
+      // Apply taxes if checkbox is checked
+      const applyTaxes = document.getElementById('applyTaxes').checked;
+      const taxRate = 0.20; // 20% tax rate
+      const taxAmount = applyTaxes ? biweeklyGrossPay * taxRate : 0;
+      const biweeklyNetPay = biweeklyGrossPay - taxAmount;
+
+      document.getElementById('result').textContent = `Biweekly Paycheck: ${biweeklyNetPay.toFixed(2)}`;
+      document.getElementById('totalHours').textContent = `Total Weekly Hours: ${totalHours.toFixed(2)} hrs`;
+      document.getElementById('breakdown').innerHTML = `
+        Regular Pay (${cappedRegularHours} hrs): ${regularPay.toFixed(2)}<br>
+        ${overtimeHours > 0 ? `Overtime Pay (${overtimeHours} hrs): ${overtimePay.toFixed(2)}<br>` : ''}
+        ${sundayHours > 0 ? `Sunday Pay (${sundayHours} hrs${document.getElementById('sundayTimeAndHalf').checked ? ' at 1.5x' : ''}): ${sundayPay.toFixed(2)}<br>` : ''}
+        Weekly Pay: ${weeklyPay.toFixed(2)}<br>
+        Biweekly Gross Pay: ${biweeklyGrossPay.toFixed(2)}<br>
+        ${applyTaxes ? `Tax Deduction (20%): -${taxAmount.toFixed(2)}<br>` : ''}
+        Biweekly Net Pay: ${biweeklyNetPay.toFixed(2)}
+      `;
+    }
+  </script>
+</body>
+</html>
