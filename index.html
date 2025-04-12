@@ -138,6 +138,12 @@
         <input type="checkbox" id="applyTaxes" />
         <label for="applyTaxes">Apply estimated tax withholdings</label>
       </div>
+      
+      <!-- 401(k) checkbox -->
+      <div class="checkbox-label" style="margin-top: 10px;">
+        <input type="checkbox" id="max401k" />
+        <label for="max401k">Max out 401(k) contribution (2025 limit: $23,000/year)</label>
+      </div>
     </div>
 
     <div id="week">
@@ -175,6 +181,20 @@
         document.getElementById('salaryField').style.display = 'block';
         document.getElementById('week').style.display = 'none';
       }
+    }
+    
+    function calculateTaxes(income) {
+      // Simple progressive tax calculation (estimated)
+      // Federal + FICA (Social Security and Medicare)
+      const fedAndFicaRate = 0.22; // Simplified estimate for average income
+      return income * fedAndFicaRate;
+    }
+
+    function calculate401k(annualIncome) {
+      // 2025 401(k) contribution limit
+      const yearlyLimit = 23000;
+      // Per paycheck (biweekly) limit
+      return yearlyLimit / 26;
     }
 
     function calculatePay() {
